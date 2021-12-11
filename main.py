@@ -129,7 +129,7 @@ def generate(piecesCount, timeonpos):
 if __name__ == '__main__':
     try:
         piecesCount = int(sys.argv[1])
-        timeonpos = int(sys.argv[2])
+        timeonpos = float(sys.argv[2])
     except:
         quit()
     generate(piecesCount, timeonpos)

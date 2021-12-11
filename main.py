@@ -1,5 +1,7 @@
 import chess
 import random
+import time
+import sys
 
 def randomfen(piecesCount):
         
@@ -73,13 +75,14 @@ def possibleCaptures(board, movedPieces):
     return captures
 
 
-def validate(fen):
+def validate(fen, timeonpos):
     board = chess.Board(fen)
-    solution = calculateMoves(board, [], [])
+    timestarted = time.time()
+    solution = calculateMoves(board, [], [], timestarted, timeonpos)
     if solution: return solution
     return 'impossible to solve'
 
-def calculateMoves(board, solution, movedPieces):
+def calculateMoves(board, solution, movedPieces, timestarted, timeonpos):
     board.turn = False
     captures = possibleCaptures(board, movedPieces)
     if captures == False:
@@ -100,23 +103,33 @@ def calculateMoves(board, solution, movedPieces):
 
         board.set_piece_at(capture['ad']['s'], capture['ag']['p'])
         solution.append(str(capture['ag']['p'].symbol()) + chess.square_name(capture['ad']['s']))
-        solution = calculateMoves(board, solution, movedPieces)
+
+        if time.time() - timestarted > timeonpos:
+            return
+        solution = calculateMoves(board, solution, movedPieces, timestarted, timestarted)
+
         if solution: return solution
         solution = solutionBeforecapture.copy()
         movedPieces = movedPiecesBeforecapture.copy()
         board = boardBeforecapture.copy()
 
-def generate(piecesCount):
+def generate(piecesCount, timeonpos):
     clear = open('output.txt', 'w')
     clear.write('')
     output = open('output.txt', 'a')
 
     while True:
         fen = randomfen(piecesCount)
-        moves = validate(fen)
-        if moves!= 'impossible to solve':
+        moves = validate(fen, timeonpos)
+        if moves != 'impossible to solve':
             output.write(f'{fen}    ;   {moves}\n')
-
+            output.flush()
+            print('possiblee')
+        
 if __name__ == '__main__':
-    print(validate('8/8/8/8/8/8/8/8 w - - 0 1'))
-    generate(6)
+    try:
+        piecesCount = int(sys.argv[1])
+        timeonpos = int(sys.argv[2])
+    except:
+        quit()
+    generate(piecesCount, timeonpos)

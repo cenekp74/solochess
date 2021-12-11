@@ -15,8 +15,9 @@ In this puzzle, the solution is to move knight A to capture knight B on the side
 (source: https://support.chess.com/article/289-what-is-solo-chess-how-do-i-play)
 
 # Usage
-- The ```generate()``` function integer of how many pieces is the generated puzzle going to have. The more pieces there ase the longer it takes to genearete
-- The ```validate()``` function expects data in standard fen format and returns either the solution or ```impossible to solve```
+- python main.py piecesCount maxTime
+- The ```generate()``` function integer of how many pieces is the generated puzzle going to have. The more pieces there ase the longer it takes to genearete. You can also specify maximum time spend on calculatoion. 
+- The ```validate()``` function expects data in standard fen format and returns either the solution or ```impossible to solve```. You can also specify maximum time spend on calculatoion. 
 - Solution is generated as list of moves in format ```PIECE_SYMBOL SQUARE```
 - Data is written to output.txt file in format:```FEN    ;    [solution]``` Example:
 ```

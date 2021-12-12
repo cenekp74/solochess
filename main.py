@@ -3,6 +3,7 @@ import random
 import time
 import sys
 
+
 def randomfen(piecesCount):
         
     def populate_board(brd, wp):
@@ -99,7 +100,8 @@ def calculateMoves(board, solution, movedPieces, timestarted, timeonpos):
             movedPieces.append(capture['ad']['s'])
             movedPieces.append(capture['ad']['s'])
         else: 
-            movedPieces.append(capture['ad']['s'])
+            if capture['ad']['s'] not in movedPieces:
+                movedPieces.append(capture['ad']['s'])
 
         board.set_piece_at(capture['ad']['s'], capture['ag']['p'])
         solution.append(str(capture['ag']['p'].symbol()) + chess.square_name(capture['ad']['s']))
@@ -117,7 +119,6 @@ def generate(piecesCount, timeonpos):
     clear = open('output.txt', 'w')
     clear.write('')
     output = open('output.txt', 'a')
-
     while True:
         fen = randomfen(piecesCount)
         moves = validate(fen, timeonpos)
@@ -125,7 +126,7 @@ def generate(piecesCount, timeonpos):
             output.write(f'{fen}    ;   {moves}\n')
             output.flush()
             print('possiblee')
-        
+
 if __name__ == '__main__':
     try:
         piecesCount = int(sys.argv[1])

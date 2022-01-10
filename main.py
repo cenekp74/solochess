@@ -1,18 +1,25 @@
 import chess
 import random
 import time
-import sys
+from multiprocessing import Process
 
+
+start = time.time()
 
 def randomfen(piecesCount):
         
     def populate_board(brd, wp):
             piece_amount = wp
             pieces = piece_list
-
+            kingAmount = 0
             while piece_amount != 0:
                 piece_rank, piece_file = random.randint(0, 7), random.randint(0, 7)
                 piece = random.choice(pieces)
+                if piece == 'K':
+                    if kingAmount >= 1:
+                        continue
+                    else:
+                        kingAmount += 1
                 if brd[piece_rank][piece_file] == " " and pawn_on_promotion_square(piece, piece_rank) == False:
                     brd[piece_rank][piece_file] = piece
                     piece_amount -= 1
@@ -75,23 +82,25 @@ def possibleCaptures(board, movedPieces):
                 captures.append({'ag': piece, 'ad': attacked})
     return captures
 
-
-def validate(fen, timeonpos):
-    board = chess.Board(fen)
+def find_solution(fen, timeonpos, board):
     timestarted = time.time()
-    solution = calculateMoves(board, [], [], timestarted, timeonpos)
-    if solution: return solution
-    return 'impossible to solve'
+    board.set_fen(fen)
+    try:
+        solutionFens, solution = calculateMoves(board, [], [], [], timestarted, timeonpos, 1)
+    except:
+        solutionFens, solution = False, False
+    if solution: return solutionFens, solution
+    return 'impossible to solve', None
 
-def calculateMoves(board, solution, movedPieces, timestarted, timeonpos):
+def calculateMoves(board, solution, movedPieces, solutionFens, timestarted, timeonpos, moveN):
     board.turn = False
     captures = possibleCaptures(board, movedPieces)
     if captures == False:
-        return solution
-
+        return solutionFens, solution
     for capture in captures:
         boardBeforecapture = board.copy()
         solutionBeforecapture = solution.copy()
+        solutionFensBeforecapture = solutionFens.copy()
         movedPiecesBeforecapture = movedPieces.copy()
         board.remove_piece_at(capture['ag']['s'])
 
@@ -102,35 +111,42 @@ def calculateMoves(board, solution, movedPieces, timestarted, timeonpos):
         else: 
             if capture['ad']['s'] not in movedPieces:
                 movedPieces.append(capture['ad']['s'])
+            else:
+                if movedPieces.count(capture['ad']['s']) >= 2:
+                    movedPieces.remove(capture['ad']['s'])
+                    
 
+        if movedPieces.count(capture['ad']['s']) >= 2:
+            capture['ag']['p'].color = 0
+        
         board.set_piece_at(capture['ad']['s'], capture['ag']['p'])
-        solution.append(str(capture['ag']['p'].symbol()) + chess.square_name(capture['ad']['s']))
-
+        solution.append(chess.square_name(capture['ag']['s']) + '-' + chess.square_name(capture['ad']['s']))
+        solutionFens.append(board.fen())
         if time.time() - timestarted > timeonpos:
             return
-        solution = calculateMoves(board, solution, movedPieces, timestarted, timestarted)
-
-        if solution: return solution
+        solutionFens, solution = calculateMoves(board, solution, movedPieces, solutionFens, timestarted, timestarted, moveN + 1)
+        if solutionFens:
+            return solutionFens, solution
+        
         solution = solutionBeforecapture.copy()
         movedPieces = movedPiecesBeforecapture.copy()
         board = boardBeforecapture.copy()
+        solutionFens = solutionFensBeforecapture.copy()
 
 def generate(piecesCount, timeonpos):
-    clear = open('output.txt', 'w')
-    clear.write('')
-    output = open('output.txt', 'a')
-    while True:
+    print(piecesCount)
+    output = open(f'{piecesCount}.txt', 'a')
+    read = open(f'{piecesCount}.txt', 'r')
+    x = len(read.readlines())
+    board = chess.Board()
+    while x < 1250:
         fen = randomfen(piecesCount)
-        moves = validate(fen, timeonpos)
-        if moves != 'impossible to solve':
-            output.write(f'{fen}    ;   {moves}\n')
+        solutionFens, solution = find_solution(fen, timeonpos, board)
+        if solutionFens != 'impossible to solve':
+            x += 1
+            output.write(f'{fen};{solutionFens};{solution};\n')
             output.flush()
-            print('possiblee')
 
 if __name__ == '__main__':
-    try:
-        piecesCount = int(sys.argv[1])
-        timeonpos = float(sys.argv[2])
-    except:
-        quit()
-    generate(piecesCount, timeonpos)
+    for _ in range(0, 4):
+        Process(target=generate, args=(10, 1)).start()
